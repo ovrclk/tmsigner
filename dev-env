@@ -1,0 +1,8 @@
+#!/bin/bash
+
+CHAIN_ID=signerchain
+rm -rf build
+./scripts/config-signer.bash skip $CHAIN_ID
+./scripts/one-node.bash $CHAIN_ID build
+make build
+./build/signer --config $HOME/.tmsigner/config.toml
