@@ -56,6 +56,7 @@ func init() {
 	rootCmd.AddCommand(
 		startCmd(),
 		configInitCmd(),
+		getVersionCmd(),
 	)
 }
 
