@@ -56,6 +56,7 @@ func init() {
 		configInitCmd(),
 		getVersionCmd(),
 		nodesCmd(),
+		privValCmd(),
 	)
 }
 

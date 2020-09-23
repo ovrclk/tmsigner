@@ -117,8 +117,7 @@ func (c *Config) PrivValStateExists() error {
 
 // LoadPrivVal returns the parsed priv validator json
 func (c *Config) LoadPrivVal() *signer.PvGuard {
-	val := privval.LoadFilePV(c.PrivValKeyFile(), c.PrivValStateFile())
-	return &signer.PvGuard{PrivValidator: val}
+	return &signer.PvGuard{PrivValidator: privval.LoadFilePV(c.PrivValKeyFile(), c.PrivValStateFile())}
 }
 
 func defaultConfig(chainID string) []byte {
