@@ -21,7 +21,7 @@ var (
 type versionInfo struct {
 	Version  string `json:"version" yaml:"version"`
 	Commit   string `json:"commit" yaml:"commit"`
-	TMCommit string `json:"cosmos-sdk" yaml:"cosmos-sdk"`
+	TMCommit string `json:"tendermint" yaml:"tendermint"`
 	Go       string `json:"go" yaml:"go"`
 }
 
