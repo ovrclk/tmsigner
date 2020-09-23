@@ -9,7 +9,9 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/ovrclk/tmsigner/signer"
 	"github.com/spf13/cobra"
+	tmlog "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 )
 
@@ -76,10 +78,17 @@ type NodeConfig struct {
 
 // Config represents the configuration file
 type Config struct {
-	PrivValKeyFile  string
-	PrivValStateDir string
+	PrivValKeyFile  string        `toml:"priv_val_key_file,omitempty"`
+	PrivValStateDir string        `toml:"priv_val_state_file,omitempty"`
 	ChainID         string        `toml:"chain_id"`
 	Nodes           []*NodeConfig `toml:"node"`
+}
+
+// Logger returns the tendermint logger
+func (c *Config) Logger() tmlog.Logger {
+	return tmlog.NewTMLogger(
+		tmlog.NewSyncWriter(os.Stdout),
+	).With("module", "validator")
 }
 
 // PrivValStateFile returns the path to the priv_validator_state.json file for the instance
@@ -87,7 +96,16 @@ func (c *Config) PrivValStateFile() string {
 	return path.Join(c.PrivValStateDir, fmt.Sprintf("%s_priv_validator_state.json", c.ChainID))
 }
 
-func (c *Config) LoadPrivVal() *signer.PVGuard {
+// PrivValStateExists returns an error if the priv val state doesn't exist
+func (c *Config) PrivValStateExists() error {
+	if !fileExists(c.PrivValStateFile()) {
+		return fmt.Errorf("state file missing: %s", c.PrivValStateFile())
+	}
+	return nil
+}
+
+// LoadPrivVal returns the parsed priv validator json
+func (c *Config) LoadPrivVal() *signer.PvGuard {
 	val := privval.LoadFilePV(c.PrivValKeyFile, c.PrivValStateFile())
 	return &signer.PvGuard{PrivValidator: val}
 }
@@ -109,8 +127,7 @@ func defaultConfig(chainID string) []byte {
 
 // LoadConfigFromFile returns the config struct from the file
 func LoadConfigFromFile(file string) (*Config, error) {
-	var config *Config
-
+	fmt.Println(file)
 	reader, err := os.Open(file)
 	if err != nil {
 		return config, err

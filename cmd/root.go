@@ -39,7 +39,6 @@ var (
 
 func init() {
 	cobra.EnableCommandSorting = false
-
 	rootCmd.SilenceUsage = true
 
 	// Register top level flags --home and --config
@@ -58,7 +57,6 @@ func init() {
 		startCmd(),
 		configInitCmd(),
 	)
-
 }
 
 // rootCmd represents the base command when called without any subcommands
@@ -72,7 +70,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
-		// reads `homeDir/config/config.yaml` into `var config *Config` before each command
+		// reads `homeDir/config.yaml` into `var config *Config` before each command
 		return initConfig(rootCmd)
 	}
 
@@ -91,13 +89,10 @@ func initConfig(cmd *cobra.Command) error {
 	config = &Config{}
 	cfgPath := path.Join(home, "config.yaml")
 	if _, err := os.Stat(cfgPath); err == nil {
-		viper.SetConfigFile(cfgPath)
-		if err := viper.ReadInConfig(); err == nil {
-			config, err = LoadConfigFromFile(viper.ConfigFileUsed())
-			if err != nil {
-				fmt.Println("Error reading in config:", err)
-				os.Exit(1)
-			}
+		config, err = LoadConfigFromFile(cfgPath)
+		if err != nil {
+			fmt.Println("Error reading in config:", err)
+			os.Exit(1)
 		}
 	}
 	return nil

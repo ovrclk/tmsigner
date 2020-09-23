@@ -16,7 +16,6 @@ limitations under the License.
 package cmd
 
 import (
-	"log"
 	"net"
 	"os"
 	"sync"
@@ -24,10 +23,8 @@ import (
 
 	"github.com/ovrclk/tmsigner/signer"
 
-	tmlog "github.com/tendermint/tendermint/libs/log"
 	tos "github.com/tendermint/tendermint/libs/os"
 	svc "github.com/tendermint/tendermint/libs/service"
-	"github.com/tendermint/tendermint/privval"
 
 	"github.com/spf13/cobra"
 )
@@ -43,35 +40,28 @@ and usage of using your command. For example:
 Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			logger := tmlog.NewTMLogger(
-				tmlog.NewSyncWriter(os.Stdout),
-			).With("module", "validator")
-
-			logger.Info(
-				"Tendermint Validator",
-				"priv-key", config.PrivValKeyFile,
-				"priv-state-dir", config.PrivValStateDir,
-			)
-
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			logger := config.Logger()
+			logger.Info("Tendermint Validator", "priv-key", config.PrivValKeyFile, "priv-state-dir", config.PrivValStateDir)
 			signer.InitSerialization()
 
 			// services to stop on shutdown
 			var services []svc.Service
 
-			if !fileExists(config.PrivValStateFile()) {
-				log.Fatalf("State file missing: %s\n", config.PrivValStateFile())
+			if err = config.PrivValStateExists(); err != nil {
+				return err
 			}
 
-			val := privval.LoadFilePV(config.PrivValKeyFile, config.PrivValStateFile())
-			pv := &signer.PvGuard{PrivValidator: val}
-
 			for _, node := range config.Nodes {
-				dialer := net.Dialer{Timeout: 30 * time.Second}
-				signer := signer.NewNodeClient(node.Address, logger, config.ChainID, pv, dialer)
+				signer := signer.NewNodeClient(
+					node.Address,
+					logger,
+					config.ChainID,
+					config.LoadPrivVal(),
+					net.Dialer{Timeout: 30 * time.Second},
+				)
 
-				err := signer.Start()
-				if err != nil {
+				if err := signer.Start(); err != nil {
 					panic(err)
 				}
 
@@ -90,7 +80,7 @@ to quickly create a Cobra application.`,
 				wg.Done()
 			})
 			wg.Wait()
-
+			return nil
 		},
 	}
 }

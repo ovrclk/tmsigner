@@ -1,18 +1,17 @@
-# Fork
-Fork of [tendermint-validator](https://gitlab.com/polychainlabs/tendermint-validator) and ongoing work on tendermint threshold validator using [threshold-ed25519](https://gitlab.com/polychainlabs/threshold-ed25519)
+# `tmsigner`
 
-Read article [Threshold Validator for Tendermint
-](https://blog.polychainlabs.com/tendermint/2020/03/26/threshold-validator-for-tendermint.html) by Polychain Labs
+A lightweight single key tendermint validator signer for use with an array of sentry nodes.
 
-With respect to Polychain Labs developers ([Roman Shtylman](https://github.com/defunctzombie)) and [Cybernetic Destiny](https://www.mintscan.io/validators/cosmosvaloper1d7ufwp2rgfj7s7pfw2q7vm2lc9txmr8vh77ztr) validator
+### Fork information and code history
 
-Updated to work with tendermint v0.33
+The `tmsigner` is based off of [litvintech](https://github.com/litvintech/tendermint-validator)'s fork of [polychainlabs/tendermint-validator](https://gitlab.com/polychainlabs/tendermint-validator). This fork reorganizes the code and adds much nicer config management to the code. This is the basis for future improvements to this code.
 
-# Tendermint Validator
+With respect to the work by:
+- [Roman Shtylman](https://github.com/defunctzombie)
+- [Cybernetic Destiny](https://www.mintscan.io/validators/cosmosvaloper1d7ufwp2rgfj7s7pfw2q7vm2lc9txmr8vh77ztr)
+- [`litvintech`](https://github.com/litvintech)
 
-A lightweight single key tendermint validator for sentry nodes.
-
-## Design
+### Design
 
 A lightweight alternative to using a full node instance for validating blocks. The validator is able to connect to any number of sentry nodes and will sign blocks provided by the nodes. The validator maintains a watermark file to protect against double signing.
 
@@ -29,13 +28,6 @@ _The security of any key material is outside the scope of this guide. At a minim
 Configure the instance with a [toml](https://github.com/toml-lang/toml) file. Below is a sample configuration.
 
 ```toml
-# Path to priv validator key json file
-key_file = "/path/to/priv_validator_key.json"
-
-# The state directory stores watermarks for double signing protection.
-# Each validator instance maintains a watermark.
-state_dir = "/path/to/state/dir"
-
 # The network chain id for your p2p nodes
 chain_id = "chain-id-here"
 
@@ -48,7 +40,9 @@ address = "tcp://<node-a ip>:1234"
 address = "tcp://<node-b ip>:1234"
 ```
 
-## Configure p2p network nodes
+You can generate this by running `tmsigner init {{chain_id}}`. `tmsigner` expects the private key file to exist in `$HOME/.tmsigner/priv_validator_key.json` and the state file to exist in `$HOME/.tmsigner/data/{{chain_id}}_priv_validator_state.json`. You can change the default home folder using the `--home` flag on all commands.
+
+### Configure p2p network nodes
 
 Validators are not directly connected to the p2p network nor do they store chain and application state. They rely on nodes to receive blocks from the p2p network, make signing requests, and relay the signed blocks back to the p2p network.
 
@@ -70,7 +64,7 @@ _We recommend hosting nodes on separate and isolated infrastructure from your va
 Once your validator instance and node is configured, you can launch the signer.
 
 ```bash
-signer --config /path/to/config.toml
+tmsigner start
 ```
 
 _We recommend using systemd or similar service management program as appropriate for your runtime platform._
@@ -90,3 +84,4 @@ software or this license, under any kind of legal claim.
 
 - https://docs.tendermint.com/master/tendermint-core/validators.html
 - https://hub.cosmos.network/master/validators/overview.html
+- https://gitlab.com/polychainlabs/tendermint-validator

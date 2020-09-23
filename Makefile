@@ -2,10 +2,8 @@ GOLINT:=$(shell go list -f {{.Target}} golang.org/x/lint/golint)
 
 all: build
 
-build: build/signer
-
-build/signer: cmd/signer/main.go $(wildcard internal/**/*.go)
-	CGO_ENABLED=0 go build -o ./build/signer ${gobuild_flags} ./cmd/signer
+build: 
+	@CGO_ENABLED=0 go build -o ./build/tmsigner main.go
 
 lint: tools
 	@$(GOLINT) -set_exit_status ./...

@@ -17,12 +17,11 @@ fi
 echo "Creating akashd instance with home=$CHAINDIR chain-id=$CHAINID..."
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000samoleans"
-akashd --home $CHAINDIR/$CHAINID --chain-id $CHAINID init $CHAINID
-akashctl --home $CHAINDIR/$CHAINID keys add validator --keyring-backend="test"
-akashd --home $CHAINDIR/$CHAINID add-genesis-account $(akashctl --home $CHAINDIR/$CHAINID keys --keyring-backend="test" show validator -a) $coins 
-echo "ABOUT TO CREATE GENTX"
-akashd --home $CHAINDIR/$CHAINID gentx --home-client $CHAINDIR/$CHAINID --name validator --keyring-backend="test"
-akashd --home $CHAINDIR/$CHAINID collect-gentxs
+akashd --home $CHAINDIR/$CHAINID --chain-id $CHAINID init $CHAINID &>/dev/null
+akashctl --home $CHAINDIR/$CHAINID keys add validator --keyring-backend="test" &>/dev/null
+akashd --home $CHAINDIR/$CHAINID add-genesis-account $(akashctl --home $CHAINDIR/$CHAINID keys --keyring-backend="test" show validator -a) $coins &>/dev/null
+akashd --home $CHAINDIR/$CHAINID gentx --home-client $CHAINDIR/$CHAINID --name validator --keyring-backend="test" &>/dev/null
+akashd --home $CHAINDIR/$CHAINID collect-gentxs &>/dev/null
 
 # Set proper defaults and change ports
 # TODO: sed for linux

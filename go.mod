@@ -1,4 +1,4 @@
-module tmsigner
+module github.com/ovrclk/tmsigner
 
 require (
 	github.com/BurntSushi/toml v0.3.1
