@@ -18,7 +18,6 @@ package cmd
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -26,7 +25,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"gopkg.in/yaml.v2"
 )
 
 var (
@@ -57,6 +55,7 @@ func init() {
 		startCmd(),
 		configInitCmd(),
 		getVersionCmd(),
+		nodesCmd(),
 	)
 }
 
@@ -71,7 +70,7 @@ var rootCmd = &cobra.Command{
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
-		// reads `homeDir/config.yaml` into `var config *Config` before each command
+		// reads `homeDir/config.toml` into `var config *Config` before each command
 		return initConfig(rootCmd)
 	}
 
@@ -88,7 +87,7 @@ func initConfig(cmd *cobra.Command) error {
 	}
 
 	config = &Config{}
-	cfgPath := path.Join(home, "config.yaml")
+	cfgPath := path.Join(home, "config.toml")
 	if _, err := os.Stat(cfgPath); err == nil {
 		config, err = LoadConfigFromFile(cfgPath)
 		if err != nil {
@@ -96,37 +95,8 @@ func initConfig(cmd *cobra.Command) error {
 			os.Exit(1)
 		}
 	}
+
 	return nil
-}
-
-func overWriteConfig(cmd *cobra.Command, cfg *Config) error {
-	home, err := cmd.Flags().GetString(flags.FlagHome)
-	if err != nil {
-		return err
-	}
-
-	cfgPath := path.Join(home, "config.yaml")
-	if _, err = os.Stat(cfgPath); err == nil {
-		viper.SetConfigFile(cfgPath)
-		if err = viper.ReadInConfig(); err == nil {
-
-			// marshal the new config
-			out, err := yaml.Marshal(cfg)
-			if err != nil {
-				return err
-			}
-
-			// overwrite the config file
-			err = ioutil.WriteFile(viper.ConfigFileUsed(), out, 0600)
-			if err != nil {
-				return err
-			}
-
-			// set the global variable
-			config = cfg
-		}
-	}
-	return err
 }
 
 // readLineFromBuf reads one line from stdin.

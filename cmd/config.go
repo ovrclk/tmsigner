@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -29,7 +30,7 @@ func configInitCmd() *cobra.Command {
 			}
 
 			dataDir := path.Join(home, "data")
-			cfgPath := path.Join(home, "config.yaml")
+			cfgPath := path.Join(home, "config.toml")
 
 			// If the config doesn't exist...
 			if _, err := os.Stat(cfgPath); os.IsNotExist(err) {
@@ -78,10 +79,20 @@ type NodeConfig struct {
 
 // Config represents the configuration file
 type Config struct {
-	PrivValKeyFile  string        `toml:"priv_val_key_file,omitempty"`
-	PrivValStateDir string        `toml:"priv_val_state_file,omitempty"`
-	ChainID         string        `toml:"chain_id"`
-	Nodes           []*NodeConfig `toml:"node"`
+	ChainID string        `toml:"chain_id"`
+	Nodes   []*NodeConfig `toml:"node"`
+
+	home string
+}
+
+// PrivValKeyFile returns the location of the PrivValKeyFile
+func (c *Config) PrivValKeyFile() string {
+	return filepath.Join(c.home, "priv_validator_key.json")
+}
+
+// PrivValStateDir returns the location of the PrivValStateDir
+func (c *Config) PrivValStateDir() string {
+	return filepath.Join(c.home, "data")
 }
 
 // Logger returns the tendermint logger
@@ -93,7 +104,7 @@ func (c *Config) Logger() tmlog.Logger {
 
 // PrivValStateFile returns the path to the priv_validator_state.json file for the instance
 func (c *Config) PrivValStateFile() string {
-	return path.Join(c.PrivValStateDir, fmt.Sprintf("%s_priv_validator_state.json", c.ChainID))
+	return path.Join(c.PrivValStateDir(), fmt.Sprintf("%s_priv_validator_state.json", c.ChainID))
 }
 
 // PrivValStateExists returns an error if the priv val state doesn't exist
@@ -106,7 +117,7 @@ func (c *Config) PrivValStateExists() error {
 
 // LoadPrivVal returns the parsed priv validator json
 func (c *Config) LoadPrivVal() *signer.PvGuard {
-	val := privval.LoadFilePV(c.PrivValKeyFile, c.PrivValStateFile())
+	val := privval.LoadFilePV(c.PrivValKeyFile(), c.PrivValStateFile())
 	return &signer.PvGuard{PrivValidator: val}
 }
 
@@ -127,7 +138,6 @@ func defaultConfig(chainID string) []byte {
 
 // LoadConfigFromFile returns the config struct from the file
 func LoadConfigFromFile(file string) (*Config, error) {
-	fmt.Println(file)
 	reader, err := os.Open(file)
 	if err != nil {
 		return config, err
@@ -145,8 +155,27 @@ func LoadConfigFromFile(file string) (*Config, error) {
 		return nil, fmt.Errorf("must configure nodes to sign for")
 	}
 
-	config.PrivValKeyFile = filepath.Join(filepath.Dir(file), "priv_validator_key.json")
-	config.PrivValStateDir = filepath.Join(filepath.Dir(file), "data")
+	config.home = filepath.Dir(file)
 
 	return config, nil
+}
+
+func overWriteConfig(cfg *Config) (err error) {
+	cfgPath := path.Join(cfg.home, "config.toml")
+	if _, err = os.Stat(cfgPath); err == nil {
+		buff := bytes.NewBuffer([]byte{})
+		if err := toml.NewEncoder(buff).Encode(cfg); err != nil {
+			panic(err)
+		}
+
+		// overwrite the config file
+		err = ioutil.WriteFile(cfgPath, buff.Bytes(), 0600)
+		if err != nil {
+			return err
+		}
+
+		// set the global variable
+		config = cfg
+	}
+	return err
 }
