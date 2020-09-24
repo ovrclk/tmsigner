@@ -27,7 +27,7 @@ if [ -z "$2" ]; then
   exit 1
 fi
 
-echo "Creating $BIN instance with home=$CHAINDIR chain-id=$CHAINID..."
+echo "Creating 2x $BIN instances with chain-id=$CHAINID..."
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000samoleans"
 

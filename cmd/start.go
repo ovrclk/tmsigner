@@ -58,6 +58,7 @@ to quickly create a Cobra application.`,
 				dialer := privval.DialTCPFn(node.Address, 100*time.Millisecond, pv.Key.PrivKey)
 				sd := privval.NewSignerDialerEndpoint(logger, dialer)
 				signer := privval.NewSignerServer(sd, config.ChainID, pv)
+				// TODO: .SetRequestHandler(CustomHandler) implement custom handler
 				if err := signer.Start(); err != nil {
 					panic(err)
 				}
