@@ -4,7 +4,7 @@ A lightweight single key tendermint validator signer for use with an array of se
 
 ### Fork information and code history
 
-The `tmsigner` is based off of [litvintech](https://github.com/litvintech/tendermint-validator)'s fork of [polychainlabs/tendermint-validator](https://gitlab.com/polychainlabs/tendermint-validator). This fork reorganizes the code and adds much nicer config management to the code. This is the basis for future improvements to this code.
+The `tmsigner` is based off of [litvintech](https://github.com/litvintech/tendermint-validator)'s fork of [polychainlabs/tendermint-validator](https://gitlab.com/polychainlabs/tendermint-validator). This fork reorganizes and adds much nicer config management to the code. This is the basis for future improvements to this code.
 
 With respect to the work by:
 - [Roman Shtylman](https://github.com/defunctzombie)
