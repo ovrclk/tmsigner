@@ -55,15 +55,9 @@ to quickly create a Cobra application.`,
 			}
 
 			for _, node := range config.Nodes {
-				signer := privval.NewSignerDialerEndpoint(
-					logger,
-					privval.DialTCPFn(
-						node.Address,
-						100*time.Millisecond,
-						pv.Key.PrivKey,
-					),
-				)
-
+				dialer := privval.DialTCPFn(node.Address, 100*time.Millisecond, pv.Key.PrivKey)
+				sd := privval.NewSignerDialerEndpoint(logger, dialer)
+				signer := privval.NewSignerServer(sd, config.ChainID, pv)
 				if err := signer.Start(); err != nil {
 					panic(err)
 				}

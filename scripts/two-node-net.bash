@@ -4,6 +4,18 @@
 CHAINID=$1
 CHAINDIR=$2
 BIN=simd
+hdir="$CHAINDIR/$CHAINID"
+n0dir="$hdir/n0"
+n1dir="$hdir/n1"
+home0="--home $n0dir"
+home1="--home $n1dir"
+n0cfgDir="$n0dir/config"
+n1cfgDir="$n1dir/config"
+n0cfg="$n0cfgDir/config.toml"
+n1cfg="$n1cfgDir/config.toml"
+kbt="--keyring-backend="test""
+cid="--chain-id=$CHAINID"
+
 
 if [ -z "$1" ]; then
   echo "Need to input chain id..."
@@ -18,18 +30,6 @@ fi
 echo "Creating $BIN instance with home=$CHAINDIR chain-id=$CHAINID..."
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000samoleans"
-
-# Have different home folders for each node
-n0dir="$CHAINDIR/$CHAINID/n0"
-n1dir="$CHAINDIR/$CHAINID/n1"
-home0="--home $n0dir"
-home1="--home $n1dir"
-n0cfgDir="$n0dir/config"
-n1cfgDir="$n1dir/config"
-n0cfg="$n0cfgDir/config.toml"
-n1cfg="$n1cfgDir/config.toml"
-kbt="--keyring-backend="test""
-cid="--chain-id=$CHAINID"
 
 # Initialize the 2 home directories
 $BIN $home0 $cid init n0 &>/dev/null
@@ -62,6 +62,7 @@ sed -i '' 's#"localhost:6060"#"localhost:6061"#g' $n1cfg
 sed -i '' 's/timeout_commit = "5s"/timeout_commit = "1s"/g' $n1cfg
 sed -i '' 's/timeout_propose = "3s"/timeout_propose = "1s"/g' $n1cfg
 sed -i '' 's#priv_validator_laddr = ""#priv_validator_laddr = "tcp://0.0.0.0:1235"#g' $n1cfg
+sed -i '' 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "debug"#g' $n1cfg
 
 # Set peers for both nodes
 peer0="$($BIN $home0 tendermint show-node-id)@127.0.0.1:26656"
@@ -74,5 +75,5 @@ mv $n0cfgDir/priv_validator_key.json $HOME/.tmsigner/priv_validator_key.json
 mv $n0dir/data/priv_validator_state.json $HOME/.tmsigner/data/${CHAINID}_priv_validator_state.json
 
 # Start the akash instances
-$BIN $home0 start --pruning=nothing > $CHAINDIR/$CHAINID.n0.log 2>&1 &
-$BIN $home1 start --pruning=nothing > $CHAINDIR/$CHAINID.n1.log 2>&1 &
+$BIN $home1 start --pruning=nothing > $hdir.n1.log 2>&1 &
+$BIN $home0 start --pruning=nothing > $hdir.n0.log 2>&1 &
