@@ -68,8 +68,8 @@ sed -i '' 's#persistent_peers = ""#persistent_peers = "'$peer1'"#g' $n0cfg
 sed -i '' 's#persistent_peers = ""#persistent_peers = "'$peer0'"#g' $n1cfg
 
 # Copy priv validator over from node that signed gentx to the signer
-cp $n0cfgDir/priv_validator_key.json $HOME/.tmsigner/priv_validator_key.json
-cp $n0dir/data/priv_validator_state.json $HOME/.tmsigner/data/${CHAINID}_priv_validator_state.json
+mv $n0cfgDir/priv_validator_key.json $HOME/.tmsigner/priv_validator_key.json
+mv $n0dir/data/priv_validator_state.json $HOME/.tmsigner/data/${CHAINID}_priv_validator_state.json
 
 # Start the akash instances
 akashd $home0 start --pruning=nothing > $CHAINDIR/$CHAINID.n0.log 2>&1 &
