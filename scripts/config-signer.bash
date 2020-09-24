@@ -18,5 +18,5 @@ if [ -z "$2" ]; then
 fi
 
 rm -rf $SIGNER_DATA &> /dev/null
-./build/tmsigner init signerchain
-./build/tmsigner nodes add tcp://localhost:1235
+tmsigner init signerchain
+tmsigner nodes add tcp://localhost:1235

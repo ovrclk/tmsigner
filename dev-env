@@ -1,8 +1,22 @@
 #!/bin/bash
 
 CHAIN_ID=signerchain
+
+# Reset the build directory
 rm -rf build
+
+# Build tmsigner and put in Path
 make build
+mv ./build/tmsigner $GOBIN
+
+# Build simd locally
+./scripts/build-simd local skip
+
+# Configure the signer to work with the simd instances
 ./scripts/config-signer.bash skip $CHAIN_ID
-./scripts/one-node.bash $CHAIN_ID build
-./build/tmsigner start
+
+# Configure and start the two node network
+./scripts/two-node-net.bash $CHAIN_ID build
+
+# Start the signer in the foreground
+tmsigner start

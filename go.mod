@@ -5,9 +5,9 @@ require (
 	github.com/cosmos/cosmos-sdk v0.39.1
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
-	github.com/spf13/viper v1.7.0
+	github.com/spf13/viper v1.7.1
 	github.com/tendermint/go-amino v0.15.1
-	github.com/tendermint/tendermint v0.33.8
+	github.com/tendermint/tendermint v0.34.0-rc4
 	gopkg.in/yaml.v2 v2.3.0
 )
 
