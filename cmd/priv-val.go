@@ -45,7 +45,7 @@ func pvStateShow() *cobra.Command {
 		Short:   "Show the current round state from the database",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			pv := config.LoadPrivVal()
-			out, ok := pv.PrivValidator.(*privval.FilePV)
+			out, ok := pv.(*privval.FilePV)
 			if !ok {
 				panic(err)
 			}

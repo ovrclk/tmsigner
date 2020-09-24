@@ -29,22 +29,23 @@ n1cfgDir="$n1dir/config"
 n0cfg="$n0cfgDir/config.toml"
 n1cfg="$n1cfgDir/config.toml"
 kbt="--keyring-backend="test""
+cid="--chain-id=$CHAINID"
 
 # Initialize the 2 home directories
-$BIN $home0 --chain-id $CHAINID init n0 #&>/dev/null
-$BIN $home1 --chain-id $CHAINID init n1 #&>/dev/null
+$BIN $home0 $cid init n0 &>/dev/null
+$BIN $home1 $cid init n1 &>/dev/null
 
 # Add some keys for funds
-$BIN $home0 keys add validator $kbt #&>/dev/null
-$BIN $home0 keys add extra $kbt #&>/dev/null
+$BIN $home0 keys add validator $kbt &>/dev/null
+$BIN $home0 keys add extra $kbt &>/dev/null
 
 # Add addresses to genesis
-$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show validator -a) $coins #&>/dev/null
-$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show extra -a) $coins #&>/dev/null
+$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show validator -a) $coins &>/dev/null
+$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show extra -a) $coins &>/dev/null
 
 # Finalize genesis on n0 node
-$BIN $home0 gentx --home-client $n0dir --name validator $kbt #&>/dev/null
-$BIN $home0 collect-gentxs #&>/dev/null
+$BIN $home0 gentx validator $kbt $cid &>/dev/null
+$BIN $home0 collect-gentxs &>/dev/null
 
 # Copy genesis over to n1
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json

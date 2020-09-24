@@ -16,15 +16,13 @@ limitations under the License.
 package cmd
 
 import (
-	"net"
 	"os"
 	"sync"
 	"time"
 
-	"github.com/ovrclk/tmsigner/signer"
-
 	tos "github.com/tendermint/tendermint/libs/os"
 	svc "github.com/tendermint/tendermint/libs/service"
+	"github.com/tendermint/tendermint/privval"
 
 	"github.com/spf13/cobra"
 )
@@ -43,7 +41,6 @@ to quickly create a Cobra application.`,
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			logger := config.Logger()
 			logger.Info("Tendermint Validator", "priv-key", config.PrivValKeyFile, "priv-state-dir", config.PrivValStateDir)
-			signer.InitSerialization()
 
 			// services to stop on shutdown
 			var services []svc.Service
@@ -52,13 +49,19 @@ to quickly create a Cobra application.`,
 				return err
 			}
 
+			pv, ok := config.LoadPrivVal().(*privval.FilePV)
+			if !ok {
+				panic("privVal not a file PV")
+			}
+
 			for _, node := range config.Nodes {
-				signer := signer.NewNodeClient(
-					node.Address,
+				signer := privval.NewSignerDialerEndpoint(
 					logger,
-					config.ChainID,
-					config.LoadPrivVal(),
-					net.Dialer{Timeout: 30 * time.Second},
+					privval.DialTCPFn(
+						node.Address,
+						100*time.Millisecond,
+						pv.Key.PrivKey,
+					),
 				)
 
 				if err := signer.Start(); err != nil {

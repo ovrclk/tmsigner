@@ -10,7 +10,7 @@ make build
 mv ./build/tmsigner $GOBIN
 
 # Build simd locally
-./scripts/build-simd local skip
+./scripts/build-simd.bash local skip
 
 # Configure the signer to work with the simd instances
 ./scripts/config-signer.bash skip $CHAIN_ID

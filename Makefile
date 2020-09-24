@@ -13,7 +13,7 @@ all: build
 gomod:
 	@go mod tidy
 
-build: gomod
+build: clean gomod
 ifeq ($(OS),Windows_NT)
 	@echo "building tmsigner binary..."
 	@CGO_ENABLED=0 go build -mod=readonly $(BUILD_FLAGS) -o build/tmsigner.exe main.go
@@ -22,9 +22,9 @@ else
 	@CGO_ENABLED=0 go build -mod=readonly $(BUILD_FLAGS) -o build/tmsigner main.go
 endif
 
-install: gomod
-	@echo "installing tmsigner binary..."
-	@go install -mod=readonly $(BUILD_FLAGS) main.go
+install: build
+	@mv ./build/tmsigner $(GOBIN)
+	# @go install -mod=readonly $(BUILD_FLAGS) main.go
 
 lint: tools
 	@$(GOLINT) -set_exit_status ./...
@@ -40,6 +40,12 @@ msan:
 
 tools:
 	@go install golang.org/x/lint/golint
+
+test-env: install
+	@./scripts/build-simd.bash local skip
+	@./scripts/config-signer.bash skip signerchain
+	@./scripts/two-node-net.bash signerchain build
+	@tmsigner start
 
 clean:
 	rm -rf build

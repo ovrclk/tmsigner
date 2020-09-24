@@ -10,10 +10,10 @@ import (
 
 	"github.com/BurntSushi/toml"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/ovrclk/tmsigner/signer"
 	"github.com/spf13/cobra"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+	tmtypes "github.com/tendermint/tendermint/types"
 )
 
 // Command for inititalizing an empty config at the --home location
@@ -116,8 +116,8 @@ func (c *Config) PrivValStateExists() error {
 }
 
 // LoadPrivVal returns the parsed priv validator json
-func (c *Config) LoadPrivVal() *signer.PvGuard {
-	return &signer.PvGuard{PrivValidator: privval.LoadFilePV(c.PrivValKeyFile(), c.PrivValStateFile())}
+func (c *Config) LoadPrivVal() tmtypes.PrivValidator {
+	return privval.LoadFilePV(c.PrivValKeyFile(), c.PrivValStateFile())
 }
 
 func defaultConfig(chainID string) []byte {
