@@ -19,3 +19,4 @@ fi
 
 rm -rf $SIGNER_DATA &> /dev/null
 ./build/tmsigner init signerchain
+./build/tmsigner nodes add tcp://localhost:1235
