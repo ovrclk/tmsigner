@@ -1,9 +1,10 @@
 #!/bin/sh
-# USAGE: ./one-chain test-chain-id ./data 26657 26656
+# USAGE: ./two-node-net skip test-chain-id ./data
 
-CHAINID=$1
-CHAINDIR=$2
+CHAINID=$2
+CHAINDIR=$3
 BIN=simd
+SIGNER_DATA=$HOME/.tmsigner
 hdir="$CHAINDIR/$CHAINID"
 n0dir="$hdir/n0"
 n1dir="$hdir/n1"
@@ -17,35 +18,53 @@ kbt="--keyring-backend="test""
 cid="--chain-id=$CHAINID"
 
 
-if [ -z "$1" ]; then
+
+# Ensure user understands what will be deleted
+if [[ -d $SIGNER_DATA ]] && [[ ! "$1" == "skip" ]]; then
+  read -p "$0 will delete \$HOME/.tmsigner folder. Do you wish to continue? (y/n): " -n 1 -r
+  echo 
+  if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+      exit 1
+  fi
+fi
+
+if [ -z "$2" ]; then
   echo "Need to input chain id..."
   exit 1
 fi
 
-if [ -z "$2" ]; then
+if [ -z "$3" ]; then
   echo "Need to input directory to create files in..."
   exit 1
 fi
+
+echo "clearing out old signer folder and configuring for new..."
+rm -rf $SIGNER_DATA &> /dev/null
+tmsigner init signerchain
+tmsigner pv create
+tmsigner keys add validator $kbt
+tmsigner nodes add tcp://localhost:1235
 
 echo "Creating 2x $BIN instances with chain-id=$CHAINID..."
 # Build genesis file incl account for passed address
 coins="100000000000stake,100000000000samoleans"
 
 # Initialize the 2 home directories
-$BIN $home0 $cid init n0 &>/dev/null
-$BIN $home1 $cid init n1 &>/dev/null
+$BIN $home0 $cid init n0 #&>/dev/null
+$BIN $home1 $cid init n1 #&>/dev/null
 
 # Add some keys for funds
-$BIN $home0 keys add validator $kbt &>/dev/null
-$BIN $home0 keys add extra $kbt &>/dev/null
+$BIN $home0 keys add extra $kbt #&>/dev/null
 
 # Add addresses to genesis
-$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show validator -a) $coins &>/dev/null
-$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show extra -a) $coins &>/dev/null
+$BIN $home0 add-genesis-account $(tmsigner keys $kbt show validator -a) $coins #&>/dev/null
+$BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show extra -a) $coins #&>/dev/null
 
 # Finalize genesis on n0 node
-$BIN $home0 gentx validator $kbt $cid &>/dev/null
-$BIN $home0 collect-gentxs &>/dev/null
+cp $n0cfgDir/genesis.json $SIGNER_DATA/genesis.json
+tmsigner tx gentx validator $kbt $cid #&>/dev/null
+cp $SIGNER_DATA/gentx/*.json $home0/gentx/
+$BIN $home0 collect-gentxs #&>/dev/null
 
 # Copy genesis over to n1
 cp $n0cfgDir/genesis.json $n1cfgDir/genesis.json

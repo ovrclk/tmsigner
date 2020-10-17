@@ -17,12 +17,16 @@ package cmd
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"os"
 	"path"
 	"strings"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/keys"
+	"github.com/cosmos/cosmos-sdk/server"
+	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -30,33 +34,26 @@ import (
 var (
 	cfgPath     string
 	homePath    string
-	debug       bool
 	config      *Config
 	defaultHome = os.ExpandEnv("$HOME/.tmsigner")
 )
 
 func init() {
+	config = &Config{home: defaultHome}
 	cobra.EnableCommandSorting = false
 	rootCmd.SilenceUsage = true
-
-	// Register top level flags --home and --config
-	// TODO: just rely on homePath and remove the config path arg?
-	rootCmd.PersistentFlags().StringVar(&homePath, flags.FlagHome, defaultHome, "set home directory")
-	rootCmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "debug output")
-	if err := viper.BindPFlag(flags.FlagHome, rootCmd.Flags().Lookup(flags.FlagHome)); err != nil {
-		panic(err)
-	}
-	if err := viper.BindPFlag("debug", rootCmd.Flags().Lookup("debug")); err != nil {
-		panic(err)
-	}
-
+	encodingConfig := simapp.MakeEncodingConfig()
 	// Register subcommands
+
 	rootCmd.AddCommand(
 		startCmd(),
 		configInitCmd(),
 		getVersionCmd(),
 		nodesCmd(),
 		privValCmd(),
+
+		keys.Commands(defaultHome),
+		txCmd(encodingConfig),
 	)
 }
 
@@ -75,20 +72,24 @@ func Execute() {
 		return initConfig(rootCmd)
 	}
 
-	if err := rootCmd.Execute(); err != nil {
+	ctx := context.Background()
+	cliCtx := client.Context{}.WithJSONMarshaler(simapp.MakeEncodingConfig().Marshaler)
+	ctx = context.WithValue(ctx, client.ClientContextKey, &cliCtx)
+	ctx = context.WithValue(ctx, server.ServerContextKey, &server.Context{
+		Viper:  viper.New(),
+		Config: config.TMConfig(),
+		Logger: config.Logger(),
+	})
+
+	if err := rootCmd.ExecuteContext(ctx); err != nil {
 		os.Exit(1)
 	}
 }
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig(cmd *cobra.Command) error {
-	home, err := cmd.PersistentFlags().GetString(flags.FlagHome)
-	if err != nil {
-		return err
-	}
-
-	config = &Config{}
-	cfgPath := path.Join(home, "config.toml")
+	config = &Config{home: defaultHome}
+	cfgPath := path.Join(defaultHome, "config.toml")
 	if _, err := os.Stat(cfgPath); err == nil {
 		config, err = LoadConfigFromFile(cfgPath)
 		if err != nil {

@@ -19,8 +19,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/spf13/cobra"
-	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/privval"
 )
 
@@ -65,13 +65,8 @@ func pvCreate() *cobra.Command {
 		Aliases: []string{},
 		Short:   "create a priv_validator_key and priv_validator_state file USUSAL WARNINGS APPLY!",
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			if tmos.FileExists(config.PrivValKeyFile()) {
-				fmt.Printf("keyfile at %s already exists...\n", config.PrivValKeyFile())
-				return
-			}
-			pv := privval.GenFilePV(config.PrivValKeyFile(), config.PrivValStateFile())
-			pv.Save()
-			return
+			_, _, err = genutil.InitializeNodeValidatorFiles(config.TMConfig())
+			return err
 		},
 	}
 	return cmd

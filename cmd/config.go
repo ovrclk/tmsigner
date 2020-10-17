@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
+	tmconfig "github.com/tendermint/tendermint/config"
 	tmlog "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmtypes "github.com/tendermint/tendermint/types"
@@ -24,12 +24,9 @@ func configInitCmd() *cobra.Command {
 		Args:    cobra.ExactArgs(1),
 		Short:   "Creates a default home directory at path defined by --home",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			home, err := cmd.Flags().GetString(flags.FlagHome)
-			if err != nil {
-				return err
-			}
-
+			home := defaultHome
 			dataDir := path.Join(home, "data")
+			cfgDir := path.Join(home, "config")
 			cfgPath := path.Join(home, "config.toml")
 
 			// If the config doesn't exist...
@@ -45,6 +42,11 @@ func configInitCmd() *cobra.Command {
 					}
 					// Create the home config folder
 					if err = os.Mkdir(dataDir, os.ModePerm); err != nil {
+						return err
+					}
+					// Create the config folder in the home dir to
+					// ensure proper placement of node key
+					if err = os.Mkdir(cfgDir, os.ModePerm); err != nil {
 						return err
 					}
 				}
@@ -85,6 +87,34 @@ type Config struct {
 	home string
 }
 
+// TMConfig returns the tendermint configuration
+func (c *Config) TMConfig() *tmconfig.Config {
+	c.home = defaultHome
+	return &tmconfig.Config{
+		BaseConfig: tmconfig.BaseConfig{
+			RootDir:            c.home,
+			Moniker:            c.ChainID,
+			Genesis:            c.GenesisFile(),
+			PrivValidatorKey:   c.PrivValKeyFile(),
+			PrivValidatorState: c.PrivValStateFile(),
+			NodeKey:            c.NodeKeyFile(),
+		},
+		RPC:             tmconfig.DefaultRPCConfig(),
+		P2P:             tmconfig.DefaultP2PConfig(),
+		Mempool:         tmconfig.DefaultMempoolConfig(),
+		StateSync:       tmconfig.DefaultStateSyncConfig(),
+		FastSync:        tmconfig.DefaultFastSyncConfig(),
+		Consensus:       tmconfig.DefaultConsensusConfig(),
+		TxIndex:         tmconfig.DefaultTxIndexConfig(),
+		Instrumentation: tmconfig.DefaultInstrumentationConfig(),
+	}
+}
+
+// GenesisFile returns the location of the GenesisFile
+func (c *Config) GenesisFile() string {
+	return filepath.Join(c.home, "genesis.json")
+}
+
 // PrivValKeyFile returns the location of the PrivValKeyFile
 func (c *Config) PrivValKeyFile() string {
 	return filepath.Join(c.home, "priv_validator_key.json")
@@ -93,6 +123,11 @@ func (c *Config) PrivValKeyFile() string {
 // PrivValStateDir returns the location of the PrivValStateDir
 func (c *Config) PrivValStateDir() string {
 	return filepath.Join(c.home, "data")
+}
+
+// NodeKeyFile used to initialize a node key for signing gentx
+func (c *Config) NodeKeyFile() string {
+	return filepath.Join(c.home, "config", "node_key.json")
 }
 
 // Logger returns the tendermint logger
@@ -104,7 +139,7 @@ func (c *Config) Logger() tmlog.Logger {
 
 // PrivValStateFile returns the path to the priv_validator_state.json file for the instance
 func (c *Config) PrivValStateFile() string {
-	return path.Join(c.PrivValStateDir(), fmt.Sprintf("%s_priv_validator_state.json", c.ChainID))
+	return path.Join(c.PrivValStateDir(), "priv_validator_state.json")
 }
 
 // PrivValStateExists returns an error if the priv val state doesn't exist

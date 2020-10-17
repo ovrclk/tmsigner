@@ -41,12 +41,6 @@ msan:
 tools:
 	@go install golang.org/x/lint/golint
 
-test-env: install
-	@./scripts/build-simd.bash local skip
-	@./scripts/config-signer.bash skip signerchain
-	@./scripts/two-node-net.bash signerchain build
-	@tmsigner start
-
 clean:
 	rm -rf build
 
