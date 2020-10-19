@@ -20,6 +20,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tendermint/tendermint/crypto/ed25519"
 	tos "github.com/tendermint/tendermint/libs/os"
 	svc "github.com/tendermint/tendermint/libs/service"
 	"github.com/tendermint/tendermint/privval"
@@ -55,7 +56,7 @@ to quickly create a Cobra application.`,
 			}
 
 			for _, node := range config.Nodes {
-				dialer := privval.DialTCPFn(node.Address, 100*time.Millisecond, pv.Key.PrivKey)
+				dialer := privval.DialTCPFn(node.Address, 100*time.Millisecond, ed25519.GenPrivKey())
 				sd := privval.NewSignerDialerEndpoint(logger, dialer)
 				signer := privval.NewSignerServer(sd, config.ChainID, pv)
 				// TODO: .SetRequestHandler(CustomHandler) implement custom handler

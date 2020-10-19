@@ -9,6 +9,10 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/simapp"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/spf13/cobra"
 	tmconfig "github.com/tendermint/tendermint/config"
 	tmlog "github.com/tendermint/tendermint/libs/log"
@@ -108,6 +112,19 @@ func (c *Config) TMConfig() *tmconfig.Config {
 		TxIndex:         tmconfig.DefaultTxIndexConfig(),
 		Instrumentation: tmconfig.DefaultInstrumentationConfig(),
 	}
+}
+
+// CLIContext returns the proper cliContext for the config
+func (c *Config) CLIContext() client.Context {
+	encodingConfig := simapp.MakeEncodingConfig()
+	return client.Context{}.
+		WithJSONMarshaler(encodingConfig.Marshaler).
+		WithTxConfig(encodingConfig.TxConfig).
+		WithLegacyAmino(encodingConfig.Amino).
+		WithInput(os.Stdin).
+		WithAccountRetriever(authtypes.AccountRetriever{}).
+		WithBroadcastMode(flags.BroadcastBlock).
+		WithHomeDir(c.home)
 }
 
 // GenesisFile returns the location of the GenesisFile

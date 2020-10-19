@@ -18,14 +18,14 @@ devenv () {
     ./scripts/two-node-net.bash skip $CHAIN_ID build
 
     # Start the signer in the foreground
-    tmsigner start 
+    tmsigner start
   }
 
   stop () {
     echo "stopping simd instances..."
     pkill -9 simd
     echo "stopping tmsigner instance..."
-	pkill -9 tmsigner
+    pkill -9 tmsigner
   }
 
   commands () {

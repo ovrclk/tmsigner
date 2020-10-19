@@ -35,11 +35,26 @@ var (
 	cfgPath     string
 	homePath    string
 	config      *Config
+	rootCmd     *cobra.Command
 	defaultHome = os.ExpandEnv("$HOME/.tmsigner")
 )
 
 func init() {
 	config = &Config{home: defaultHome}
+
+	rootCmd = &cobra.Command{
+		Use:   "tmsigner",
+		Short: "This application signs blocks for tendermint using a configured private key",
+		Long:  strings.TrimSpace(``),
+		PersistentPreRunE: func(cmd *cobra.Command, args []string) (err error) {
+			if err = initConfig(rootCmd); err != nil {
+				return err
+			}
+
+			return client.SetCmdClientContextHandler(config.CLIContext(), cmd)
+		},
+	}
+
 	cobra.EnableCommandSorting = false
 	rootCmd.SilenceUsage = true
 	encodingConfig := simapp.MakeEncodingConfig()
@@ -57,23 +72,11 @@ func init() {
 	)
 }
 
-// rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "tmsigner",
-	Short: "This application signs blocks for tendermint using a configured private key",
-	Long:  strings.TrimSpace(``),
-}
-
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	rootCmd.PersistentPreRunE = func(_ *cobra.Command, _ []string) error {
-		// reads `homeDir/config.toml` into `var config *Config` before each command
-		return initConfig(rootCmd)
-	}
-
 	ctx := context.Background()
-	cliCtx := client.Context{}.WithJSONMarshaler(simapp.MakeEncodingConfig().Marshaler)
+	cliCtx := config.CLIContext()
 	ctx = context.WithValue(ctx, client.ClientContextKey, &cliCtx)
 	ctx = context.WithValue(ctx, server.ServerContextKey, &server.Context{
 		Viper:  viper.New(),

@@ -11,7 +11,7 @@ if [[ ! -d $GOPATH ]] || [[ ! -d $GOBIN ]] || [[ ! -x "$(which go)" ]]; then
 fi
 
 SDK_REPO="$GOPATH/src/github.com/cosmos/cosmos-sdk"
-SDK_BRANCH=master
+SDK_BRANCH=v0.40.0-rc0
 SIMD_DATA="$(pwd)/data"
 
 # ARGS: 

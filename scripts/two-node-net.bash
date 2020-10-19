@@ -62,8 +62,9 @@ $BIN $home0 add-genesis-account $($BIN $home0 keys $kbt show extra -a) $coins #&
 
 # Finalize genesis on n0 node
 cp $n0cfgDir/genesis.json $SIGNER_DATA/genesis.json
-tmsigner tx gentx validator $kbt $cid #&>/dev/null
-cp $SIGNER_DATA/gentx/*.json $home0/gentx/
+tmsigner tx gentx validator $kbt $cid --moniker foo  #&>/dev/null
+mkdir -p $n0cfgDir/gentx
+cp $SIGNER_DATA/config/gentx/*.json $n0cfgDir/gentx/
 $BIN $home0 collect-gentxs #&>/dev/null
 
 # Copy genesis over to n1
@@ -84,8 +85,8 @@ sed -i '' 's#priv_validator_laddr = ""#priv_validator_laddr = "tcp://0.0.0.0:123
 sed -i '' 's#log_level = "main:info,state:info,statesync:info,*:error"#log_level = "debug"#g' $n1cfg
 
 # Set peers for both nodes
-peer0="$($BIN $home0 tendermint show-node-id)@127.0.0.1:26656"
-peer1="$($BIN $home1 tendermint show-node-id)@127.0.0.1:26666"
+peer0="$($BIN $home0 tendermint show-node-id)@192.168.0.1:26656"
+peer1="$($BIN $home1 tendermint show-node-id)@192.168.0.1:26666"
 sed -i '' 's#persistent_peers = ""#persistent_peers = "'$peer1'"#g' $n0cfg
 sed -i '' 's#persistent_peers = ""#persistent_peers = "'$peer0'"#g' $n1cfg
 
@@ -93,6 +94,6 @@ sed -i '' 's#persistent_peers = ""#persistent_peers = "'$peer0'"#g' $n1cfg
 mv $n0cfgDir/priv_validator_key.json $HOME/.tmsigner/priv_validator_key.json
 mv $n0dir/data/priv_validator_state.json $HOME/.tmsigner/data/${CHAINID}_priv_validator_state.json
 
-# Start the akash instances
-$BIN $home1 start --pruning=nothing > $hdir.n1.log 2>&1 &
-$BIN $home0 start --pruning=nothing > $hdir.n0.log 2>&1 &
+# Start the cosmos instances
+$BIN $home1 start --pruning=nothing --grpc.address="0.0.0.0:9090" > $hdir.n1.log 2>&1 &
+$BIN $home0 start --pruning=nothing --grpc.address="0.0.0.0:9091" > $hdir.n0.log 2>&1 &
